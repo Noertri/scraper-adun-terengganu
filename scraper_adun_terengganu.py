@@ -17,7 +17,8 @@ def scraper(cl: httpx.Client):
     souped = BeautifulSoup(r.text, "lxml")
     table = souped.select_one("article table")
 
-    sentene_pattern = re.compile(r"[\w\s,]+?\n([\w\s',\.]+)\n([\w\s\(\)]+)")
+    split_pattern = re.compile(r"[\n\r\t]+")
+    char_pattern = re.compile(r"(\xa0{1,})")
 
     results = list()
 
@@ -27,23 +28,24 @@ def scraper(cl: httpx.Client):
             for row in rows:
                 for col in row.select("td"):
                     result = {"position": "Member of the State Legislative Assembly (Ahli Dewan Undangan Negeri) | State Legislative Assembly (Dewan Undangan Negeri), Terengganu"}
-                    c = col.get_text(strip=True, separator="\n")
-                    if (c := sentene_pattern.match(c)):
-                        result["name"] = c.group(1).replace("\n", " ")
-                        result["address"] = c.group(2).replace("\n", "")
+                    c = col.get_text().strip()
+                    if bool(c):
+                        words = [char_pattern.sub(" ", word) for word in split_pattern.split(c)]
+                        result["name"] = " ".join(words[:-1])
+                        result["address"] = words[-1]
                         result["photo_link"] = parse.urljoin(main_url, parse.quote(src)) if (src := col.select_one("img").get("src", None)) else ""
                         results.append(result)
 
-    if not os.path.isdir("hasil"):
-        os.makedirs("hasil")
+    if not os.path.isdir("results"):
+        os.makedirs("results")
 
     filename = "ADUN_Terengganu_{0}.csv".format(datetime.now().strftime("%d%m%Y%H%M%S"))
 
-    print(f"Save to hasil/{filename}...")
+    print(f"Save to results/{filename}...")
 
     try:
-        with open(os.path.join("hasil", filename), "w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=("name", "position", "address", "photo_link"))
+        with open(os.path.join("results", filename), "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=("name", "position", "address", "photo_link"), delimiter=";")
             writer.writeheader()
             writer.writerows(results)
             f.close()
