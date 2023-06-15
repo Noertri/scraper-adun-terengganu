@@ -1,3 +1,2 @@
 beautifulsoup4>=4.12.2
 httpx>=0.24.1
-lxml>=4.9.2

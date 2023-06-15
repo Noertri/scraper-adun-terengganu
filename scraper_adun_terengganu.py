@@ -14,7 +14,7 @@ main_url = "https://dun.terengganu.gov.my"
 def scraper(cl: httpx.Client):
     print("Start to scrape web...")
     r = cl.get(parse.urljoin(main_url, "index.php/2013-06-26-00-46-38/ahli-dewan-undangan-negeri"), timeout=5.)
-    souped = BeautifulSoup(r.text, "lxml")
+    souped = BeautifulSoup(r.text, "html.parser")
     table = souped.select_one("article table")
 
     split_pattern = re.compile(r"[\n\r\t]+")
