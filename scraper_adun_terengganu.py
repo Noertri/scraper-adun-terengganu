@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 import csv
 import traceback
+import string
 
 
 main_url = "https://dun.terengganu.gov.my"
@@ -18,7 +19,8 @@ def scraper(cl: httpx.Client):
     table = souped.select_one("article table")
 
     split_pattern = re.compile(r"[\n\r\t]+")
-    char_pattern = re.compile(r"(\xa0{1,})")
+    nbsp_pattern = re.compile(r"(\xa0{1,})")
+    non_ascii = re.compile(r"[^\x20-\x7F]+")
 
     results = list()
 
@@ -30,7 +32,7 @@ def scraper(cl: httpx.Client):
                     result = {"position": "Member of the State Legislative Assembly (Ahli Dewan Undangan Negeri) | State Legislative Assembly (Dewan Undangan Negeri), Terengganu"}
                     c = col.get_text().strip()
                     if bool(c):
-                        words = [char_pattern.sub(" ", word) for word in split_pattern.split(c)]
+                        words = [nbsp_pattern.sub(" ", non_ascii.sub("'", word)) for word in split_pattern.split(c)]
                         result["name"] = " ".join(words[:-1])
                         result["address"] = words[-1]
                         result["photo_link"] = parse.urljoin(main_url, parse.quote(src)) if (src := col.select_one("img").get("src", None)) else ""
