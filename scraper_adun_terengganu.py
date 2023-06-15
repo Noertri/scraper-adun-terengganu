@@ -6,7 +6,6 @@ from datetime import datetime
 import os
 import csv
 import traceback
-import string
 
 
 main_url = "https://dun.terengganu.gov.my"
